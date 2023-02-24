@@ -9,6 +9,33 @@ import (
 	"context"
 )
 
+const createEntry = `-- name: CreateEntry :one
+INSERT INTO entry (
+    account_id,
+    amount
+) VALUES (
+    $1, $2
+)
+RETURNING id, account_id, amount, created_at
+`
+
+type CreateEntryParams struct {
+	AccountID int64 `json:"accountID"`
+	Amount    int64 `json:"amount"`
+}
+
+func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
+	row := q.db.QueryRowContext(ctx, createEntry, arg.AccountID, arg.Amount)
+	var i Entry
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getEntries = `-- name: GetEntries :many
 SELECT id, account_id, amount, created_at FROM entry
 WHERE account_id = $1
