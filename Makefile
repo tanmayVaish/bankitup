@@ -1,5 +1,8 @@
-postgres:
+postgresinit:
 	docker run --name postgres-instance-1 -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=12345678 -d postgres:12-alpine
+
+postgresstart:
+	docker container start postgres-instance-1
 
 createdb:
 	docker exec -it postgres-instance-1 createdb --username=root --owner=root bankitup
@@ -16,4 +19,7 @@ migrationdown:
 sqlc:
 	sqlc generate
 
-.PHONY: postgres createdb dropdb migrationup migrationdown sqlc
+test:
+	go test -v -cover ./...
+
+.PHONY: postgres createdb dropdb migrationup migrationdown sqlc test
