@@ -60,7 +60,7 @@ type TransferTxResult struct {
 
 // ? TransferTx performs a money transfer from one account to another.
 // ? It creates a transfer record and updates account balances within a database transaction.
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Transfer, error) {
+func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 
 	var result TransferTxResult
 
@@ -94,12 +94,36 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 
 		// TODO: update account balances
 
+		account1, err := q.GetAccount(ctx, arg.FromAccountID)
+		if err != nil {
+			return err
+		}
+
+		result.FromAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
+			ID:      arg.FromAccountID,
+			Balance: account1.Balance - arg.Amount,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		account2, err := q.GetAccount(ctx, arg.ToAccountID)
+		if err != nil {
+			return err
+		}
+
+		result.ToAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
+			ID:      arg.FromAccountID,
+			Balance: account2.Balance + arg.Amount,
+		})
+
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 
-	if err != nil {
-		return Transfer{}, err
-	}
-
-	return result.Transfer, nil
+	return result, err
 }
